@@ -48,8 +48,12 @@ Thumbs.db
 # Streamlit/FastAPI specific
 .streamlit/
 
-# other
-.mypy_cache/
-.pytest_cache/
-.coverage
-htmlcov/
+# Node/React UIs
+node_modules/
+dist/
+dist-ssr/
+*.local
+
+# workspace
+.gemini/
+

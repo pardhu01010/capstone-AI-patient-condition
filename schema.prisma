@@ -1,0 +1,51 @@
+datasource db {
+  provider  = "postgresql"
+  url       = env("SUPABASE_DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+generator client {
+  provider             = "prisma-client-py"
+  recursive_type_depth = 5
+}
+
+model Case {
+  case_id                 String   @id
+  created_at              String
+  last_updated_at         String?
+  
+  patient                 Json?
+  vitals                  Json?
+  labs                    Json?
+  symptoms                Json?
+  meds_administered       Json?
+  oxygen_support          String?
+  notes                   String?
+  location                String?
+  attachments             Json?
+  
+  risk_level              String
+  survival_probability    Float
+  cardiac_risk_score      Float
+  
+  recommendations         Json?
+  rag_protocols           Json?
+  medication_plan         Json?
+  llm_summary             String
+  
+  shap_local_plot_b64     String
+  shap_global_plot_b64    String
+  lime_local_plot_b64     String
+  lr_survival_probability Float
+  top_shap_features       Json?
+  
+  vitals_history          Json?
+  
+  patient_status          String  @default("active")
+  time_of_death           String?
+  cause_notes             String?
+  confirmed_by            String?
+  declared_at             String?
+  
+  hospital_suggestions    Json?
+}

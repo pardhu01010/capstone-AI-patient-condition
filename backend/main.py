@@ -65,7 +65,7 @@ def healthcheck() -> dict:
 # ---------------------------------------------------------------------------
 
 @app.post("/api/intake", response_model=IntakeResponse)
-def create_case(payload: IntakePayload) -> IntakeResponse:
+async def create_case(payload: IntakePayload) -> IntakeResponse:
     inference_result = run_structured_models(payload)
     protocols = retrieve_contextual_protocols(payload)
     combined_recommendations = inference_result.recommendations + protocols
@@ -104,7 +104,7 @@ def create_case(payload: IntakePayload) -> IntakeResponse:
         "top_shap_features": inference_result.top_shap_features,
     }
 
-    store.add_case(case_record)
+    await store.add_case(case_record)
 
     return IntakeResponse(
         case_id=case_id,
@@ -130,9 +130,10 @@ def create_case(payload: IntakePayload) -> IntakeResponse:
 # ---------------------------------------------------------------------------
 
 @app.get("/api/cases", response_model=List[CaseSummary])
-def list_cases() -> List[CaseSummary]:
+async def list_cases() -> List[CaseSummary]:
     summaries: List[CaseSummary] = []
-    for record in store.list_cases():
+    cases = await store.list_cases()
+    for record in cases:
         summaries.append(
             CaseSummary(
                 case_id=record["case_id"],
@@ -152,8 +153,8 @@ def list_cases() -> List[CaseSummary]:
 # ---------------------------------------------------------------------------
 
 @app.get("/api/cases/{case_id}", response_model=CaseDetail)
-def get_case(case_id: str) -> CaseDetail:
-    record = store.get_case(case_id)
+async def get_case(case_id: str) -> CaseDetail:
+    record = await store.get_case(case_id)
     if not record:
         raise HTTPException(status_code=404, detail="Case not found")
 
@@ -184,7 +185,7 @@ def get_case(case_id: str) -> CaseDetail:
             record["top_shap_features"]       = xai.top_shap_features
             if not record.get("rag_protocols"):
                 record["rag_protocols"] = []
-            store.add_case(record)   # persist so next fetch is instant
+            await store.add_case(record)   # persist so next fetch is instant
         except Exception:
             # Safe fallback: dashboard renders without XAI plots
             record.setdefault("shap_local_plot_b64", "")
@@ -239,7 +240,7 @@ def get_case(case_id: str) -> CaseDetail:
 # ---------------------------------------------------------------------------
 
 @app.patch("/api/cases/{case_id}/update", response_model=CaseUpdateResponse)
-def update_case(case_id: str, payload: CaseUpdatePayload) -> CaseUpdateResponse:
+async def update_case(case_id: str, payload: CaseUpdatePayload) -> CaseUpdateResponse:
     """
     Update an existing case with new vitals mid-transport.
     - Merges new vitals over the existing ones (only provided fields change).
@@ -247,7 +248,7 @@ def update_case(case_id: str, payload: CaseUpdatePayload) -> CaseUpdateResponse:
     - Appends a VitalSnapshot to the case history timeline.
     - Persists updated record to cases.json.
     """
-    record = store.get_case(case_id)
+    record = await store.get_case(case_id)
     if not record:
         raise HTTPException(status_code=404, detail="Case not found")
 
@@ -330,7 +331,7 @@ def update_case(case_id: str, payload: CaseUpdatePayload) -> CaseUpdateResponse:
     record["top_shap_features"]    = inference_result.top_shap_features
     record["last_updated_at"]      = updated_at.isoformat()
 
-    store.add_case(record)
+    await store.add_case(record)
 
     return CaseUpdateResponse(
         case_id=case_id,
@@ -345,9 +346,9 @@ def update_case(case_id: str, payload: CaseUpdatePayload) -> CaseUpdateResponse:
 
 
 @app.get("/api/cases/{case_id}/history", response_model=List[VitalSnapshot])
-def get_case_history(case_id: str) -> List[VitalSnapshot]:
+async def get_case_history(case_id: str) -> List[VitalSnapshot]:
     """Return full vitals history timeline for a case."""
-    record = store.get_case(case_id)
+    record = await store.get_case(case_id)
     if not record:
         raise HTTPException(status_code=404, detail="Case not found")
 
@@ -372,9 +373,9 @@ def get_case_history(case_id: str) -> List[VitalSnapshot]:
 # ---------------------------------------------------------------------------
 
 @app.post("/api/cases/{case_id}/deceased", response_model=DeceasedResponse)
-def declare_deceased(case_id: str, payload: DeceasedPayload) -> DeceasedResponse:
+async def declare_deceased(case_id: str, payload: DeceasedPayload) -> DeceasedResponse:
     """Mark a patient as deceased — records TOD, cause, and confirming person."""
-    record = store.get_case(case_id)
+    record = await store.get_case(case_id)
     if not record:
         raise HTTPException(status_code=404, detail="Case not found")
     if record.get("patient_status") == "deceased":
@@ -403,7 +404,7 @@ def declare_deceased(case_id: str, payload: DeceasedPayload) -> DeceasedResponse
     if "vitals_history" not in record:
         record["vitals_history"] = []
     record["vitals_history"].append(final_snapshot)
-    store.add_case(record)
+    await store.add_case(record)
 
     return DeceasedResponse(
         case_id=case_id,
@@ -422,9 +423,9 @@ def declare_deceased(case_id: str, payload: DeceasedPayload) -> DeceasedResponse
 # ---------------------------------------------------------------------------
 
 @app.post("/api/cases/{case_id}/suggestions", response_model=HospitalSuggestion)
-def post_suggestion(case_id: str, payload: SuggestionPayload) -> HospitalSuggestion:
+async def post_suggestion(case_id: str, payload: SuggestionPayload) -> HospitalSuggestion:
     """Hospital staff posts a suggestion/note visible to the ambulance."""
-    record = store.get_case(case_id)
+    record = await store.get_case(case_id)
     if not record:
         raise HTTPException(status_code=404, detail="Case not found")
 
@@ -444,23 +445,23 @@ def post_suggestion(case_id: str, payload: SuggestionPayload) -> HospitalSuggest
     suggestion_dict = suggestion.dict()
     suggestion_dict["timestamp"] = suggestion_dict["timestamp"].isoformat()
     record["hospital_suggestions"].append(suggestion_dict)
-    store.add_case(record)
+    await store.add_case(record)
     return suggestion
 
 
 @app.get("/api/cases/{case_id}/suggestions", response_model=List[HospitalSuggestion])
-def get_suggestions(case_id: str) -> List[HospitalSuggestion]:
+async def get_suggestions(case_id: str) -> List[HospitalSuggestion]:
     """Get all hospital suggestions for a case."""
-    record = store.get_case(case_id)
+    record = await store.get_case(case_id)
     if not record:
         raise HTTPException(status_code=404, detail="Case not found")
     return [HospitalSuggestion(**s) for s in record.get("hospital_suggestions", [])]
 
 
 @app.patch("/api/cases/{case_id}/suggestions/{suggestion_id}/acknowledge")
-def acknowledge_suggestion(case_id: str, suggestion_id: str) -> dict:
+async def acknowledge_suggestion(case_id: str, suggestion_id: str) -> dict:
     """Ambulance acknowledges a suggestion — marks it as read."""
-    record = store.get_case(case_id)
+    record = await store.get_case(case_id)
     if not record:
         raise HTTPException(status_code=404, detail="Case not found")
 
@@ -470,13 +471,13 @@ def acknowledge_suggestion(case_id: str, suggestion_id: str) -> dict:
             s["acknowledged"] = True
             break
     record["hospital_suggestions"] = suggestions
-    store.add_case(record)
+    await store.add_case(record)
     return {"acknowledged": True, "suggestion_id": suggestion_id}
 
 
 @app.get("/api/cases/{case_id}/attachments/{attachment_index}")
-def download_attachment(case_id: str, attachment_index: int) -> Response:
-    record = store.get_case(case_id)
+async def download_attachment(case_id: str, attachment_index: int) -> Response:
+    record = await store.get_case(case_id)
     if not record:
         raise HTTPException(status_code=404, detail="Case not found")
 
