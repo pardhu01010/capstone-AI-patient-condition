@@ -1,0 +1,17 @@
+tk
+numpy
+pandas
+matplotlib
+seaborn
+scikit-learn
+joblib
+fastapi
+uvicorn
+streamlit
+requests
+pydantic
+python-multipart
+# --- Paper-specified ML & XAI dependencies (Section IV-B & IV-C) ---
+xgboost          # Primary GBM model (XGBoost) — Section IV-B
+shap             # SHAP TreeExplainer for global & local explanations — Section IV-C-a
+lime             # LIME local surrogate explainer — Section IV-C-b
