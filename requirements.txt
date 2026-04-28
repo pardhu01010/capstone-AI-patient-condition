@@ -17,3 +17,8 @@ shap             # SHAP TreeExplainer for global & local explanations — Sectio
 lime             # LIME local surrogate explainer — Section IV-C-b
 groq             # Groq API client
 langfuse         # LLM Tracing & Observability
+
+# --- Vector DB & Inference ---
+qdrant-client
+fastembed
+python-dotenv
