@@ -311,7 +311,7 @@ export default function Hospital() {
                  </div>
                  <div style={{ background: '#050505', border: '1px solid #1a1a1a', padding: '1.5rem', textAlign: 'center' }}>
                    <div style={{ color: '#777', fontSize: '0.85rem', letterSpacing: '0.1em', fontWeight: 600, marginBottom: '1rem' }}>CARDIAC SCORE</div>
-                   <div style={{ color: '#fff', fontSize: '2.5rem', fontFamily: 'monospace' }}>{(activeCase.cardiac_risk_score * 10).toFixed(1)}<span style={{ fontSize: '1rem', color: '#777' }}>/10</span></div>
+                   <div style={{ color: '#fff', fontSize: '2.5rem', fontFamily: 'monospace' }}>{activeCase.cardiac_risk_score.toFixed(1)}<span style={{ fontSize: '1rem', color: '#777' }}>/10</span></div>
                  </div>
                  <div style={{ background: '#050505', border: '1px solid #1a1a1a', padding: '1.5rem', textAlign: 'center' }}>
                    <div style={{ color: '#777', fontSize: '0.85rem', letterSpacing: '0.1em', fontWeight: 600, marginBottom: '1rem' }}>AGE</div>
@@ -349,11 +349,11 @@ export default function Hospital() {
                      </div>
                      <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #1a1a1a', paddingBottom: '0.5rem' }}>
                        <span style={{ color: '#777' }}>Temperature (°C)</span>
-                       <span style={{ color: '#fff' }}>{activeCase.vitals?.temperature || '--'}</span>
+                       <span style={{ color: '#fff' }}>{activeCase.vitals?.temperature_c || '--'}</span>
                      </div>
                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                        <span style={{ color: '#777' }}>Consciousness</span>
-                       <span style={{ color: '#fff' }}>{activeCase.vitals?.consciousness || '--'}</span>
+                       <span style={{ color: '#fff' }}>{activeCase.vitals?.consciousness_level || '--'}</span>
                      </div>
                    </div>
                  </div>
@@ -398,12 +398,12 @@ export default function Hospital() {
                    </h3>
                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', fontFamily: 'monospace' }}>
                      {activeCase.medication_plan?.map((med: any, idx: number) => (
-                        <div key={idx} style={{ background: '#111', border: '1px solid #1a1a1a', padding: '1rem' }}>
+                         <div key={idx} style={{ background: '#111', border: '1px solid #1a1a1a', padding: '1rem' }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '0.5rem' }}>
                             <div style={{ width: '12px', height: '12px', background: med.priority === 'immediate' ? '#D13619' : '#3b82f6' }}></div>
                             <span style={{ color: '#fff', fontSize: '1.1rem' }}>{med.medication}</span>
                           </div>
-                          <div style={{ color: '#777', fontSize: '0.9rem' }}>{med.reason}</div>
+                          <div style={{ color: '#777', fontSize: '0.9rem' }}>{med.purpose}</div>
                         </div>
                      ))}
                    </div>
@@ -421,10 +421,10 @@ export default function Hospital() {
                           <span style={{ color: '#fff', fontSize: '1rem' }}>{f.feature}</span>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                             <div style={{ width: '80px', height: '10px', background: '#111', border: '1px solid #1a1a1a', position: 'relative' }}>
-                              <div style={{ position: 'absolute', right: 0, top: 0, height: '100%', width: `${Math.min(100, Math.abs(f.value) * 30)}%`, background: f.value > 0 ? '#D13619' : '#00c48c' }}></div>
+                              <div style={{ position: 'absolute', right: 0, top: 0, height: '100%', width: `${Math.min(100, Math.abs(f.shap_value) * 30)}%`, background: f.shap_value > 0 ? '#D13619' : '#00c48c' }}></div>
                             </div>
-                            <span style={{ color: f.value > 0 ? '#D13619' : '#00c48c', fontSize: '1rem', width: '50px', textAlign: 'right' }}>
-                              {f.value > 0 ? '↑' : '↓'} {Math.abs(f.value).toFixed(2)}
+                            <span style={{ color: f.shap_value > 0 ? '#D13619' : '#00c48c', fontSize: '1rem', width: '50px', textAlign: 'right' }}>
+                              {f.shap_value > 0 ? '↑' : '↓'} {Math.abs(f.shap_value).toFixed(2)}
                             </span>
                           </div>
                         </div>

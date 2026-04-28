@@ -174,6 +174,9 @@ const Ambulance = () => {
                 symptoms: clinical.symptoms ? clinical.symptoms.split(',').map(s => s.trim()) : ["context-upload"],
                 meds_administered: clinical.medications ? clinical.medications.split(',').map(s => s.trim()) : [],
                 labs: labs.results ? [{ name: "Lab Report", value: labs.results }] : [],
+                oxygen_support: clinical.oxygen || null,
+                location: clinical.location || null,
+                notes: clinical.notes || null,
                 attachments: attachments  
             };
             const response = await axios.post(`${API_BASE}/intake`, payload);

@@ -253,3 +253,5 @@ class CaseDetail(BaseModel):
     declared_at: Optional[datetime] = None
     # Hospital suggestions visible to ambulance
     hospital_suggestions: List[HospitalSuggestion] = Field(default_factory=list)
+    # Historical vitals timeline
+    vitals_history: List[VitalSnapshot] = Field(default_factory=list)

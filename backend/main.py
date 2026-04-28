@@ -243,6 +243,7 @@ async def get_case(case_id: str) -> CaseDetail:
         hospital_suggestions=[
             HospitalSuggestion(**s) for s in record.get("hospital_suggestions", [])
         ],
+        vitals_history=[VitalSnapshot(**s) for s in record.get("vitals_history", [])],
     )
 
 
