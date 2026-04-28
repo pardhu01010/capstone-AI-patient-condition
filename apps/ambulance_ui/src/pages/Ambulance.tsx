@@ -3,7 +3,7 @@ import axios from 'axios';
 import { Activity, HeartPulse, Wind, Thermometer, Brain, Send, User, Stethoscope, Droplet, FileText, AlertTriangle, Upload } from 'lucide-react';
 import gsap from 'gsap';
 
-const API_BASE = "http://localhost:8000/api";
+const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:8000/api";
 
 // Helper Components for Brutalist Form Elements
 const InputBlock = ({ label, icon: Icon, value, onChange, type = "text", placeholder = "", colSpan = 1, required = false }: any) => (

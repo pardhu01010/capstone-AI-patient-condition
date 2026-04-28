@@ -4,7 +4,7 @@ import { Activity, AlertTriangle, FileText, User, Info, CheckCircle2 } from 'luc
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import gsap from 'gsap';
 
-const API_BASE = 'http://localhost:8000/api';
+const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:8000/api";
 
 export default function Hospital() {
   const [progress, setProgress] = useState(0);
