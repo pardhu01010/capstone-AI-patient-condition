@@ -21,6 +21,18 @@ export default function Hospital() {
   const [suggestionName, setSuggestionName] = useState("");
   const [suggestionPriority, setSuggestionPriority] = useState("Normal");
 
+  const getRiskColor = (risk: string) => {
+    if (risk === 'critical') return '#D13619';
+    if (risk === 'high') return '#f59e0b';
+    return '#00c48c';
+  };
+
+  const getRiskBgColor = (risk: string) => {
+    if (risk === 'critical') return 'rgba(209, 54, 25, 0.1)';
+    if (risk === 'high') return 'rgba(245, 158, 11, 0.1)';
+    return 'rgba(0, 196, 140, 0.1)';
+  };
+
   // GSAP Boot Sequence
   useEffect(() => {
       let ctx = gsap.context(() => {
@@ -228,13 +240,13 @@ export default function Hospital() {
                   cursor: 'pointer',
                   background: selectedCaseId === c.case_id ? '#1a1a1a' : '#050505',
                   border: '1px solid #1a1a1a',
-                  borderLeft: `4px solid ${c.risk_level === 'high' ? '#D13619' : '#00c48c'}`,
+                  borderLeft: `4px solid ${getRiskColor(c.risk_level)}`,
                   transition: 'all 0.2s'
                 }}
               >
                 <div style={{ fontWeight: 'bold', fontSize: '1.2rem', color: '#fff', marginBottom: '0.5rem', fontFamily: 'monospace' }}>{c.patient?.name || 'UNKNOWN'}</div>
-                <div style={{ fontSize: '1rem', fontWeight: 'bold', color: c.risk_level === 'high' ? '#D13619' : '#00c48c', textTransform: 'uppercase', marginBottom: '0.5rem' }}>
-                  {c.risk_level === 'high' ? 'CRITICAL RISK' : 'GUARDED RISK'}
+                <div style={{ fontSize: '1rem', fontWeight: 'bold', color: getRiskColor(c.risk_level), textTransform: 'uppercase', marginBottom: '0.5rem' }}>
+                  {c.risk_level} RISK
                 </div>
                 <div style={{ fontSize: '0.85rem', color: '#777', fontFamily: 'monospace' }}>
                   SURVIVAL: {(c.survival_probability * 100).toFixed(0)}% • ID: {c.case_id.substring(0, 8)}
@@ -269,8 +281,8 @@ export default function Hospital() {
               
               {/* PATIENT PROFILE HEADER */}
               <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'center', background: '#050505', border: '1px solid #1a1a1a', padding: '1.5rem' }}>
-                 <div style={{ border: `2px solid ${activeCase.risk_level === 'high' ? '#D13619' : '#00c48c'}`, borderRadius: '50%', padding: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                   <User color={activeCase.risk_level === 'high' ? '#D13619' : '#00c48c'} size={32} />
+                 <div style={{ border: `2px solid ${getRiskColor(activeCase.risk_level)}`, borderRadius: '50%', padding: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                   <User color={getRiskColor(activeCase.risk_level)} size={32} />
                  </div>
                  <div style={{ flex: 1 }}>
                    <h3 style={{ fontSize: '1.8rem', color: '#fff', margin: '0 0 0.5rem 0', fontFamily: '"Impact", "Arial Black", sans-serif', letterSpacing: '0.05em' }}>{activeCase.patient?.name || 'UNKNOWN PATIENT'}</h3>
@@ -278,8 +290,8 @@ export default function Hospital() {
                      AGE: {activeCase.patient?.age || '--'} • SEX: {activeCase.patient?.sex || '--'} • BLOOD: {activeCase.patient?.blood_group || '--'} • LOC: {activeCase.location || '--'}
                    </div>
                  </div>
-                 <div style={{ background: activeCase.risk_level === 'high' ? 'rgba(209, 54, 25, 0.1)' : 'rgba(0, 196, 140, 0.1)', border: `2px solid ${activeCase.risk_level === 'high' ? '#D13619' : '#00c48c'}`, color: activeCase.risk_level === 'high' ? '#D13619' : '#00c48c', padding: '1rem 2rem', fontFamily: '"Impact", "Arial Black", sans-serif', fontSize: '1.5rem', letterSpacing: '0.1em' }}>
-                   {activeCase.risk_level === 'high' ? 'CRITICAL RISK' : 'GUARDED RISK'}
+                 <div style={{ background: getRiskBgColor(activeCase.risk_level), border: `2px solid ${getRiskColor(activeCase.risk_level)}`, color: getRiskColor(activeCase.risk_level), padding: '1rem 2rem', fontFamily: '"Impact", "Arial Black", sans-serif', fontSize: '1.5rem', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
+                   {activeCase.risk_level} RISK
                  </div>
               </div>
 
@@ -287,7 +299,7 @@ export default function Hospital() {
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '1.5rem' }}>
                  <div style={{ background: '#050505', border: '1px solid #1a1a1a', padding: '1.5rem', textAlign: 'center' }}>
                    <div style={{ color: '#777', fontSize: '0.85rem', letterSpacing: '0.1em', fontWeight: 600, marginBottom: '1rem' }}>RISK LEVEL</div>
-                   <div style={{ color: activeCase.risk_level === 'high' ? '#D13619' : '#00c48c', fontSize: '2rem', fontFamily: '"Impact", "Arial Black", sans-serif' }}>{activeCase.risk_level === 'high' ? 'CRITICAL' : 'GUARDED'}</div>
+                   <div style={{ color: getRiskColor(activeCase.risk_level), fontSize: '2rem', fontFamily: '"Impact", "Arial Black", sans-serif', textTransform: 'uppercase' }}>{activeCase.risk_level}</div>
                  </div>
                  <div style={{ background: '#050505', border: '1px solid #1a1a1a', padding: '1.5rem', textAlign: 'center' }}>
                    <div style={{ color: '#777', fontSize: '0.85rem', letterSpacing: '0.1em', fontWeight: 600, marginBottom: '1rem' }}>SURVIVAL (GBM)</div>

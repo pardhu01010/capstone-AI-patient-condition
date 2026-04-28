@@ -101,6 +101,15 @@ async def create_case(payload: IntakePayload) -> IntakeResponse:
         "lime_local_plot_b64": inference_result.lime_local_plot_b64,
         "lr_survival_probability": inference_result.lr_survival_probability,
         "top_shap_features": inference_result.top_shap_features,
+        "vitals_history": [{
+            "timestamp": created_at.isoformat(),
+            "vitals": payload.vitals.dict(),
+            "risk_level": inference_result.risk_level,
+            "survival_probability": inference_result.survival_probability,
+            "cardiac_risk_score": inference_result.cardiac_risk_score,
+            "update_reason": "Initial assessment",
+            "symptoms": payload.symptoms,
+        }]
     }
 
     await store.add_case(case_record)

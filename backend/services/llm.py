@@ -3,15 +3,17 @@ from __future__ import annotations
 import os
 from typing import List, Optional
 
-import requests
-
 from backend.schemas import IntakePayload, MedicationPlan, Recommendation
 from backend.services.inference import StructuredInferenceResult
 
+try:
+    from langfuse.groq import Groq
+    # The client automatically picks up GROQ_API_KEY, LANGFUSE_SECRET_KEY, 
+    # LANGFUSE_PUBLIC_KEY, and LANGFUSE_HOST from the environment variables.
+    client = Groq()
+except ImportError:
+    client = None
 
-GROQ_API_URL = os.getenv(
-    "GROQ_API_URL", "https://api.groq.com/openai/v1/chat/completions"
-)
 GROQ_MODEL = os.getenv("GROQ_MODEL", "mixtral-8x7b-32768")
 
 
@@ -39,7 +41,7 @@ def generate_summary_with_groq(
     recommendations: List[Recommendation],
 ) -> Optional[str]:
     api_key = os.getenv("GROQ_API_KEY")
-    if not api_key:
+    if not api_key or client is None:
         return None
 
     system_prompt = (
@@ -60,25 +62,20 @@ def generate_summary_with_groq(
         "Create a concise handoff summary and explicit prep instructions."
     )
 
-    headers = {
-        "Authorization": f"Bearer {api_key}",
-        "Content-Type": "application/json",
-    }
-    data = {
-        "model": GROQ_MODEL,
-        "messages": [
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": user_prompt},
-        ],
-        "temperature": float(os.getenv("GROQ_TEMPERATURE", "0.3")),
-        "max_tokens": 300,
-    }
-
     try:
-        response = requests.post(GROQ_API_URL, json=data, headers=headers, timeout=30)
-        response.raise_for_status()
-        content = response.json()["choices"][0]["message"]["content"]
-        return content.strip()
-    except (requests.RequestException, KeyError, IndexError):
+        # This call is automatically traced by Langfuse!
+        # It logs latency, token usage, the prompt, the response, and model config.
+        response = client.chat.completions.create(
+            model=GROQ_MODEL,
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt},
+            ],
+            temperature=float(os.getenv("GROQ_TEMPERATURE", "0.3")),
+            max_tokens=300,
+            name="triage-handoff-summary" # Distinct name in Langfuse UI
+        )
+        return response.choices[0].message.content.strip()
+    except Exception as e:
+        print(f"Groq/Langfuse Error: {e}")
         return None
-

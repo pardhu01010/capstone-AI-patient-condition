@@ -5,6 +5,45 @@ import gsap from 'gsap';
 
 const API_BASE = "http://localhost:8000/api";
 
+// Helper Components for Brutalist Form Elements
+const InputBlock = ({ label, icon: Icon, value, onChange, type = "text", placeholder = "", colSpan = 1, required = false }: any) => (
+    <div style={{ background: '#050505', padding: '1.5rem', border: '1px solid #1a1a1a', gridColumn: `span ${colSpan}` }}>
+        <label style={{ color: '#777', fontSize: '0.85rem', letterSpacing: '0.1em', fontWeight: 600, display: 'block', marginBottom: '1rem' }}>
+            {Icon && <Icon size={14} style={{verticalAlign: 'text-bottom', marginRight: '6px', color: '#D13619'}}/>} {label} {required && <span style={{ color: '#D13619' }}>*</span>}
+        </label>
+        <input 
+            type={type} 
+            value={value} 
+            onChange={onChange} 
+            placeholder={placeholder}
+            required={required}
+            style={{ width: '100%', background: 'transparent', border: 'none', borderBottom: '2px solid #333', color: '#fff', fontSize: type === 'number' ? '2rem' : '1.2rem', fontFamily: 'monospace', padding: '0.5rem 0', outline: 'none' }} 
+        />
+    </div>
+);
+
+const TextAreaBlock = ({ label, icon: Icon, value, onChange, placeholder = "", required = false }: any) => (
+    <div style={{ background: '#050505', padding: '1.5rem', border: '1px solid #1a1a1a' }}>
+        <label style={{ color: '#777', fontSize: '0.85rem', letterSpacing: '0.1em', fontWeight: 600, display: 'block', marginBottom: '1rem' }}>
+            {Icon && <Icon size={14} style={{verticalAlign: 'text-bottom', marginRight: '6px', color: '#D13619'}}/>} {label} {required && <span style={{ color: '#D13619' }}>*</span>}
+        </label>
+        <textarea 
+            value={value} 
+            onChange={onChange} 
+            placeholder={placeholder}
+            required={required}
+            rows={3}
+            style={{ width: '100%', background: 'transparent', border: 'none', borderBottom: '2px solid #333', color: '#fff', fontSize: '1.1rem', fontFamily: 'monospace', padding: '0.5rem 0', outline: 'none', resize: 'vertical' }} 
+        />
+    </div>
+);
+
+const SectionHeader = ({ title, icon: Icon }: any) => (
+    <h3 style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '1.2rem', color: '#D13619', fontFamily: '"Impact", "Arial Black", sans-serif', margin: '3rem 0 1rem 0', letterSpacing: '0.05em' }}>
+        <Icon color="#D13619" size={20} />
+        {title}
+    </h3>
+);
 const Ambulance = () => {
     const [progress, setProgress] = useState(0);
     const [isReady, setIsReady] = useState(false);
@@ -16,7 +55,7 @@ const Ambulance = () => {
     // --- Expanded Form State ---
     const [patient, setPatient] = useState({
         name: '',
-        age: 0,
+        age: '',
         sex: 'Unknown',
         blood_group: '',
         allergies: '',
@@ -24,12 +63,12 @@ const Ambulance = () => {
     });
 
     const [vitals, setVitals] = useState({
-        heart_rate: 0,
-        blood_pressure_systolic: 0,
-        blood_pressure_diastolic: 0,
-        spo2: 0,
-        respiratory_rate: 0,
-        temperature_c: 0,
+        heart_rate: '',
+        blood_pressure_systolic: '',
+        blood_pressure_diastolic: '',
+        spo2: '',
+        respiratory_rate: '',
+        temperature_c: '',
         consciousness_level: "Alert"
     });
 
@@ -117,13 +156,21 @@ const Ambulance = () => {
             const payload = {
                 patient: { 
                     name: patient.name || "Unknown", 
-                    age: patient.age, 
+                    age: Number(patient.age) || 0, 
                     sex: patient.sex, 
                     blood_group: patient.blood_group || "Unknown", 
                     allergies: patient.allergies ? patient.allergies.split(',').map(s => s.trim()) : [], 
                     chronic_conditions: patient.chronic_conditions ? patient.chronic_conditions.split(',').map(s => s.trim()) : [] 
                 },
-                vitals: vitals,
+                vitals: {
+                    heart_rate: Number(vitals.heart_rate) || 0,
+                    blood_pressure_systolic: Number(vitals.blood_pressure_systolic) || 0,
+                    blood_pressure_diastolic: Number(vitals.blood_pressure_diastolic) || 0,
+                    spo2: Number(vitals.spo2) || 0,
+                    respiratory_rate: Number(vitals.respiratory_rate) || 0,
+                    temperature_c: Number(vitals.temperature_c) || 0,
+                    consciousness_level: vitals.consciousness_level
+                },
                 symptoms: clinical.symptoms ? clinical.symptoms.split(',').map(s => s.trim()) : ["context-upload"],
                 meds_administered: clinical.medications ? clinical.medications.split(',').map(s => s.trim()) : [],
                 labs: labs.results ? [{ name: "Lab Report", value: labs.results }] : [],
@@ -131,6 +178,17 @@ const Ambulance = () => {
             };
             const response = await axios.post(`${API_BASE}/intake`, payload);
             setResult(response.data);
+            
+            // Clear the form for the next patient
+            setPatient({ name: '', age: '', sex: 'Unknown', blood_group: '', allergies: '', chronic_conditions: '' });
+            setVitals({ heart_rate: '', blood_pressure_systolic: '', blood_pressure_diastolic: '', spo2: '', respiratory_rate: '', temperature_c: '', consciousness_level: "Alert" });
+            setClinical({ symptoms: '', medications: '', oxygen: '', location: '', notes: '' });
+            setLabs({ results: '' });
+            setAttachments([]);
+            
+            // Hide the success message after 5 seconds
+            setTimeout(() => setResult(null), 5000);
+            
         } catch (error) {
             console.error("API Error", error);
         } finally {
@@ -138,45 +196,6 @@ const Ambulance = () => {
         }
     };
 
-    // Helper Components for Brutalist Form Elements
-    const InputBlock = ({ label, icon: Icon, value, onChange, type = "text", placeholder = "", colSpan = 1, required = false }: any) => (
-        <div style={{ background: '#050505', padding: '1.5rem', border: '1px solid #1a1a1a', gridColumn: `span ${colSpan}` }}>
-            <label style={{ color: '#777', fontSize: '0.85rem', letterSpacing: '0.1em', fontWeight: 600, display: 'block', marginBottom: '1rem' }}>
-                {Icon && <Icon size={14} style={{verticalAlign: 'text-bottom', marginRight: '6px', color: '#D13619'}}/>} {label} {required && <span style={{ color: '#D13619' }}>*</span>}
-            </label>
-            <input 
-                type={type} 
-                value={value} 
-                onChange={onChange} 
-                placeholder={placeholder}
-                required={required}
-                style={{ width: '100%', background: 'transparent', border: 'none', borderBottom: '2px solid #333', color: '#fff', fontSize: type === 'number' ? '2rem' : '1.2rem', fontFamily: 'monospace', padding: '0.5rem 0', outline: 'none' }} 
-            />
-        </div>
-    );
-
-    const TextAreaBlock = ({ label, icon: Icon, value, onChange, placeholder = "", required = false }: any) => (
-        <div style={{ background: '#050505', padding: '1.5rem', border: '1px solid #1a1a1a' }}>
-            <label style={{ color: '#777', fontSize: '0.85rem', letterSpacing: '0.1em', fontWeight: 600, display: 'block', marginBottom: '1rem' }}>
-                {Icon && <Icon size={14} style={{verticalAlign: 'text-bottom', marginRight: '6px', color: '#D13619'}}/>} {label} {required && <span style={{ color: '#D13619' }}>*</span>}
-            </label>
-            <textarea 
-                value={value} 
-                onChange={onChange} 
-                placeholder={placeholder}
-                required={required}
-                rows={3}
-                style={{ width: '100%', background: 'transparent', border: 'none', borderBottom: '2px solid #333', color: '#fff', fontSize: '1.1rem', fontFamily: 'monospace', padding: '0.5rem 0', outline: 'none', resize: 'vertical' }} 
-            />
-        </div>
-    );
-
-    const SectionHeader = ({ title, icon: Icon }: any) => (
-        <h3 style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '1.2rem', color: '#D13619', fontFamily: '"Impact", "Arial Black", sans-serif', margin: '3rem 0 1rem 0', letterSpacing: '0.05em' }}>
-            <Icon color="#D13619" size={20} />
-            {title}
-        </h3>
-    );
 
     return (
         <div style={{ 
@@ -235,7 +254,7 @@ const Ambulance = () => {
                     <SectionHeader title="PATIENT PROFILE" icon={User} />
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1.5rem' }}>
                         <InputBlock label="FULL NAME" icon={User} value={patient.name} onChange={(e: any) => setPatient({...patient, name: e.target.value})} placeholder="e.g. John Smith" colSpan={3} />
-                        <InputBlock label="AGE (YEARS)" icon={User} type="number" value={patient.age || ''} onChange={(e: any) => setPatient({...patient, age: parseInt(e.target.value) || 0})} colSpan={1} />
+                        <InputBlock label="AGE (YEARS)" icon={User} type="number" value={patient.age} onChange={(e: any) => setPatient({...patient, age: e.target.value})} colSpan={1} />
                         
                         <div style={{ background: '#050505', padding: '1.5rem', border: '1px solid #1a1a1a', gridColumn: 'span 2' }}>
                             <label style={{ color: '#777', fontSize: '0.85rem', letterSpacing: '0.1em', fontWeight: 600, display: 'block', marginBottom: '1rem' }}>SEX</label>
@@ -254,12 +273,12 @@ const Ambulance = () => {
                     {/* VITAL SIGNS */}
                     <SectionHeader title="VITAL SIGNS" icon={Activity} />
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1.5rem' }}>
-                        <InputBlock label="HEART RATE (bpm)" icon={HeartPulse} type="number" required={true} value={vitals.heart_rate || ''} onChange={(e: any) => setVitals({...vitals, heart_rate: parseInt(e.target.value) || 0})} />
-                        <InputBlock label="SPO2 (%)" icon={Wind} type="number" required={true} value={vitals.spo2 || ''} onChange={(e: any) => setVitals({...vitals, spo2: parseInt(e.target.value) || 0})} />
-                        <InputBlock label="RESP. RATE (/min)" icon={Wind} type="number" required={true} value={vitals.respiratory_rate || ''} onChange={(e: any) => setVitals({...vitals, respiratory_rate: parseInt(e.target.value) || 0})} />
-                        <InputBlock label="SYSTOLIC BP (mmHg)" icon={Activity} type="number" required={true} value={vitals.blood_pressure_systolic || ''} onChange={(e: any) => setVitals({...vitals, blood_pressure_systolic: parseInt(e.target.value) || 0})} />
-                        <InputBlock label="DIASTOLIC BP (mmHg)" icon={Activity} type="number" required={true} value={vitals.blood_pressure_diastolic || ''} onChange={(e: any) => setVitals({...vitals, blood_pressure_diastolic: parseInt(e.target.value) || 0})} />
-                        <InputBlock label="TEMPERATURE (°C)" icon={Thermometer} type="number" required={true} value={vitals.temperature_c || ''} onChange={(e: any) => setVitals({...vitals, temperature_c: parseFloat(e.target.value) || 0})} />
+                        <InputBlock label="HEART RATE (bpm)" icon={HeartPulse} type="number" required={true} value={vitals.heart_rate} onChange={(e: any) => setVitals({...vitals, heart_rate: e.target.value})} />
+                        <InputBlock label="SPO2 (%)" icon={Wind} type="number" required={true} value={vitals.spo2} onChange={(e: any) => setVitals({...vitals, spo2: e.target.value})} />
+                        <InputBlock label="RESP. RATE (/min)" icon={Wind} type="number" required={true} value={vitals.respiratory_rate} onChange={(e: any) => setVitals({...vitals, respiratory_rate: e.target.value})} />
+                        <InputBlock label="SYSTOLIC BP (mmHg)" icon={Activity} type="number" required={true} value={vitals.blood_pressure_systolic} onChange={(e: any) => setVitals({...vitals, blood_pressure_systolic: e.target.value})} />
+                        <InputBlock label="DIASTOLIC BP (mmHg)" icon={Activity} type="number" required={true} value={vitals.blood_pressure_diastolic} onChange={(e: any) => setVitals({...vitals, blood_pressure_diastolic: e.target.value})} />
+                        <InputBlock label="TEMPERATURE (°C)" icon={Thermometer} type="number" required={true} value={vitals.temperature_c} onChange={(e: any) => setVitals({...vitals, temperature_c: e.target.value})} />
                     </div>
 
                     {/* CONSCIOUSNESS LEVEL */}
