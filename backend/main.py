@@ -33,12 +33,11 @@ from backend.schemas import (
 from backend.services.inference import run_structured_models
 from backend.services.llm import generate_summary_with_groq
 from backend.services.medication import build_medication_plan
-from backend.services.rag import retrieve_contextual_protocols
+from backend.services.rag import retrieve_contextual_protocols, index_case_to_vdb
 from backend.storage import CaseStore
 
 
-DATA_PATH = Path("backend/data/cases.json")
-store = CaseStore(DATA_PATH)
+store = CaseStore()
 
 app = FastAPI(title="Intelligent Ambulance Backend", version="0.2.0")
 
@@ -105,6 +104,9 @@ async def create_case(payload: IntakePayload) -> IntakeResponse:
     }
 
     await store.add_case(case_record)
+    
+    # Save to Vector DB for AI pattern analysis
+    index_case_to_vdb(payload, case_id)
 
     return IntakeResponse(
         case_id=case_id,

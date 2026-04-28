@@ -212,7 +212,7 @@ const Ambulance = () => {
                     </div>
                 )}
                 
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', borderBottom: '2px solid #333', paddingBottom: '1rem', marginBottom: '3rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', borderBottom: '2px solid #333', paddingBottom: '1rem', marginBottom: '2rem' }}>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                         <h2 style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '2rem', color: '#D13619', fontFamily: '"Impact", "Arial Black", sans-serif', margin: 0, letterSpacing: '0.05em' }}>
                             <Activity color="#D13619" size={32} />

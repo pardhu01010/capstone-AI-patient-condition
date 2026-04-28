@@ -81,3 +81,33 @@ def retrieve_contextual_protocols(payload: IntakePayload) -> List[Recommendation
         )
 
     return matches
+
+def index_case_to_vdb(payload: IntakePayload, case_id: str):
+    """Stores the patient condition dynamically in Qdrant for historical AI modeling."""
+    if not q_client:
+        return
+        
+    try:
+        # Create a text representation of the patient state
+        symptoms_str = ", ".join(payload.symptoms)
+        meds_str = ", ".join(payload.meds_administered)
+        notes = payload.notes or "No notes"
+        
+        text_doc = f"Case {case_id}: Patient presented with {symptoms_str}. Vitals: HR {payload.vitals.heart_rate}, BP {payload.vitals.blood_pressure_systolic}/{payload.vitals.blood_pressure_diastolic}, SpO2 {payload.vitals.spo2}%. Meds given: {meds_str}. Notes: {notes}."
+        
+        metadata = {
+            "case_id": case_id,
+            "age": payload.patient.age,
+            "sex": payload.patient.sex,
+            "symptoms": payload.symptoms
+        }
+
+        # Automatically embeds and inserts into Qdrant using FastEmbed
+        q_client.add(
+            collection_name="historical_cases",
+            documents=[text_doc],
+            metadata=[metadata],
+            ids=[case_id]
+        )
+    except Exception as e:
+        print(f"Failed to index case to VDB: {e}")

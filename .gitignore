@@ -57,3 +57,7 @@ dist-ssr/
 # workspace
 .gemini/
 
+# Database / Vector Store
+backend/data/
+qdrant_storage/
+qdrant/
