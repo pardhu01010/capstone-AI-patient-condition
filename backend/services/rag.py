@@ -14,7 +14,10 @@ COLLECTION_NAME = "hospital_protocols"
 # Initialize client. FastEmbed is automatically triggered if using `add` and `query` methods.
 # For local Qdrant, API key is usually not required.
 try:
-    q_client = QdrantClient(url=QDRANT_URL, api_key=QDRANT_API_KEY if QDRANT_API_KEY else None)
+    if QDRANT_URL:
+        q_client = QdrantClient(url=QDRANT_URL, api_key=QDRANT_API_KEY if QDRANT_API_KEY else None)
+    else:
+        q_client = QdrantClient(path="local_qdrant_db")
 except Exception as e:
     q_client = None
     print(f"Failed to connect to Qdrant: {e}")
