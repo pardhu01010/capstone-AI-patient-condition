@@ -7,14 +7,16 @@ from qdrant_client.http.models import Filter, FieldCondition, MatchValue
 
 from backend.schemas import IntakePayload, Recommendation
 
-QDRANT_URL = os.getenv("QDRANT_URL", "http://localhost:6333")
+QDRANT_URL = os.getenv("QDRANT_URL", "")
 QDRANT_API_KEY = os.getenv("QDRANT_API_KEY", "")
 COLLECTION_NAME = "hospital_protocols"
 
 # Initialize client. FastEmbed is automatically triggered if using `add` and `query` methods.
-# For local Qdrant, API key is usually not required.
+# For Render free tier, we disable Qdrant by default to prevent OOM kills from FastEmbed models.
 try:
-    if QDRANT_URL:
+    if os.getenv("RENDER"):
+        q_client = None
+    elif QDRANT_URL:
         q_client = QdrantClient(url=QDRANT_URL, api_key=QDRANT_API_KEY if QDRANT_API_KEY else None)
     else:
         q_client = QdrantClient(path="local_qdrant_db")
@@ -49,14 +51,15 @@ def retrieve_contextual_protocols(payload: IntakePayload) -> List[Recommendation
     # Simple query formulation using symptoms and vitals
     query_text = f"Symptoms: {symptoms_text} | HR: {payload.vitals.heart_rate} | SpO2: {payload.vitals.spo2}"
     
-    if q_client and q_client.collection_exists(collection_name=COLLECTION_NAME):
+    if q_client:
         try:
-            # Query Qdrant using the built-in fastembed models
-            search_result = q_client.query(
-                collection_name=COLLECTION_NAME,
-                query_text=query_text,
-                limit=2
-            )
+            if q_client.collection_exists(collection_name=COLLECTION_NAME):
+                # Query Qdrant using the built-in fastembed models
+                search_result = q_client.query(
+                    collection_name=COLLECTION_NAME,
+                    query_text=query_text,
+                    limit=2
+                )
             for hit in search_result:
                 if hit.score > 0.70: # Confidence threshold
                     matches.append(Recommendation(
