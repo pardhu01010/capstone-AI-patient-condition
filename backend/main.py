@@ -34,12 +34,21 @@ from backend.services.inference import run_structured_models
 from backend.services.llm import generate_summary_with_groq
 from backend.services.medication import build_medication_plan
 from backend.services.rag import retrieve_contextual_protocols, index_case_to_vdb
-from backend.storage import CaseStore
+from backend.storage import CaseStore, db
+from fastapi.concurrency import run_in_threadpool
 
 
 store = CaseStore()
 
 app = FastAPI(title="Intelligent Ambulance Backend", version="0.2.0")
+
+@app.on_event("startup")
+async def startup():
+    await db.connect()
+
+@app.on_event("shutdown")
+async def shutdown():
+    await db.disconnect()
 
 app.add_middleware(
     CORSMiddleware,
@@ -65,16 +74,16 @@ def healthcheck() -> dict:
 
 @app.post("/api/intake", response_model=IntakeResponse)
 async def create_case(payload: IntakePayload) -> IntakeResponse:
-    inference_result = run_structured_models(payload)
-    protocols = retrieve_contextual_protocols(payload)
+    inference_result = await run_in_threadpool(run_structured_models, payload)
+    protocols = await run_in_threadpool(retrieve_contextual_protocols, payload)
     combined_recommendations = inference_result.recommendations + protocols
     medication_plan = build_medication_plan(payload)
 
     case_id = str(uuid4())
     created_at = datetime.utcnow()
 
-    llm_summary = _compose_summary(
-        payload, inference_result, medication_plan, combined_recommendations
+    llm_summary = await run_in_threadpool(
+        _compose_summary, payload, inference_result, medication_plan, combined_recommendations
     )
 
     case_record = {
@@ -115,7 +124,7 @@ async def create_case(payload: IntakePayload) -> IntakeResponse:
     await store.add_case(case_record)
     
     # Save to Vector DB for AI pattern analysis
-    index_case_to_vdb(payload, case_id)
+    await run_in_threadpool(index_case_to_vdb, payload, case_id)
 
     return IntakeResponse(
         case_id=case_id,
