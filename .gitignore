@@ -32,6 +32,7 @@ venv.bak/
 # Environment variables
 .env
 .env.*
+# !.env.example
 
 # IDEs and Editors
 .vscode/
@@ -61,3 +62,10 @@ dist-ssr/
 backend/data/
 qdrant_storage/
 qdrant/
+local_qdrant_db/
+qdrant-data/
+
+# Testing & Caching
+.pytest_cache/
+coverage/
+npm-debug.log*
